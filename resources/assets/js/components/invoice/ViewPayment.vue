@@ -8,13 +8,20 @@
 
 
 					<div class="modal-header">
-						<h4 class="modal-title" id="CreatePayment">Pagos de factura N° : {{ id }}  <br> Cliente : {{ invoice.customer.customer_name }} </h4>
+						<h4 class="modal-title" id="CreatePayment">Productos de factura N° : {{ id }} </h4>
 					</div>
 					<div class="modal-body">
 
+						
 						<div class="table-responsive">
 							<table class="table table-bordered table-condensed">
 								<thead>
+									<tr>
+										<th class="bg-teal text-white">Listado de Mercadería</th>
+									</tr>
+								</thead>
+								
+								<!-- <thead>
 									<tr>
 										<th>Fecha</th>
 										<th>Importe</th>
@@ -25,26 +32,26 @@
 									</tr>
 
 
-								</thead>
+								</thead> -->
 
 								<tbody>
 									<tr v-for="payment in payments">
-										<td>{{ payment.date | moment('LL') }}</td>	
-										<td>{{ payment.amount }}</td>	
+										<td>{{ payment.date }}</td>	
+										<!-- <td>{{ payment.amount }}</td>	
 										<td>{{ payment.paid_in }}</td>
-										<td>{{ payment.bank_information }}</td>	
-										<td>{{ payment.user.name }}</td>	
-										<td>
+										<td>{{ payment.bank_information }}</td>	 -->
+										<!-- <td>{{ payment.user.name }}</td> -->	
+										<!-- <td>
 											<button @click="deletePayment(payment.id)" type="button" class="btn bg-pink btn-circle waves-effect waves-circle waves-float">
 												<i class="material-icons">delete</i>
-											</button> </td>	
+											</button> </td> -->	
 										</tr>
 
 									</tbody> 
 								</table>
 							</div>
 
-							<div class="row">
+							<!-- <div class="row">
 								<div class="col-md-4">
 									<div class="form-group">
 										<p>Total a pagar</p>
@@ -61,7 +68,7 @@
 										<input type="text" name="" disabled="" :value="invoice.total_amount-totalAmount">
 									</div>
 								</div>
-							</div>
+							</div> -->
 
 						</div>
 						<div class="modal-footer">
@@ -135,7 +142,7 @@
 
 				getPayment(id){
 
-					axios.get(base_url+'payment/'+id)
+					axios.get(base_url + 'invoice/details/' + id)
 					.then(response => {
 
 						this.payments = response.data.payment;  

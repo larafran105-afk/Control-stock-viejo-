@@ -41060,7 +41060,7 @@ var render = function() {
                         _vm._v(" "),
                         _c("td", [
                           _vm._v(
-                            _vm._s(_vm._f("moment")(value.created_at, "LL"))
+                            _vm._s(_vm._f("moment")(value.created_at.replace(/-/g,"/") , "YYYY-MM-DD"))
                           )
                         ]),
                         _vm._v(" "),

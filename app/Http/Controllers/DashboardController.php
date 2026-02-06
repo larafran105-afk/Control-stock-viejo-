@@ -20,8 +20,27 @@ class DashboardController extends Controller
      */
     public function index()
     {
+        $user = auth()->user();
+        $mostrarModalCaja = false;
 
-        return view('welcome');
+        // 1. Verificamos si ya tiene una caja abierta hoy
+        $cajaAbierta = \App\Caja::where('user_id', $user->id)
+                                ->where('estado', 'abierta')
+                                ->exists();
+
+        // 2. Lógica para mostrar o no el modal
+        if (!$cajaAbierta) {
+            if ($user->role_id == 2 || $user->role_id == 13) {
+                // Si es Super Admin, solo mostramos si NO la cerró en esta sesión
+                $mostrarModalCaja = !session('caja_omitida_hoy');
+            } else {
+                // Para el resto (3, 4, 5), es obligatorio siempre
+                $mostrarModalCaja = true;
+            }
+        }
+
+        return view('welcome', compact('mostrarModalCaja')); 
+        
     }
 
 

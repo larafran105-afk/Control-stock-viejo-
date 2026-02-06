@@ -67,7 +67,7 @@
               <td>{{ value.buying_price }}</td>
               <td>{{ value.selling_price }}</td>
               <td>{{ value.user.name }}</td>
-              <td>{{ value.created_at | moment('LL') }}</td>
+              <td>{{ value.created_at + 'Z' | moment('LL') }}</td>
               <td>
                 <button @click="editQty(value.id, value.category_id)" type="button"
                   class="btn bg-blue btn-circle waves-effect waves-circle waves-float">

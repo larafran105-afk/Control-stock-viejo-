@@ -32,17 +32,25 @@
                     @php
 
                     $side_menu = Session::get('side_menu');
-                    
+                    $itemConfiguracion = null;
+
                     // Obtenemos la última vez que el usuario entró a Auditoría (si no existe, usamos ayer)
                     $ultimaVezVisto = session('audit_last_seen', now()->subDay());
 
                     // Solo mostramos el "!" si hay movimientos grabados DESPUÉS de esa hora
                     $hayMovimientosNuevos = \App\ActivityLog::where('created_at', '>', $ultimaVezVisto)->exists();
+                    
+                    
 
                     @endphp
 
                     @foreach($side_menu[0] as $value)
 
+                    @if($value['name'] == 'Configuración' || $value['name'] == 'Configuración')
+                        @php $item_configuracion = $value; @endphp
+                        @continue   
+                    @endif
+                    
                     @if(count($value['sub_menu'])>0)
                     <li class="parent">
                         <a href="javascript:void(0);" class="menu-toggle">
@@ -93,11 +101,32 @@
                     @endforeach()
                     
                     <li class="parent">
-    <a href="{{ route('stock.total') }}" class="button">
-        <i class="material-icons">assessment</i>
-        <span>Stock Total por Producto</span>
-    </a>
-</li>   
+                        <a href="{{ route('stock.total') }}" class="button">
+                            <i class="material-icons">assessment</i>
+                            <span>Stock Total por Producto</span>
+                        </a>
+                    </li>   
+                    
+                    <li class="{{ Request::is('caja*') ? 'active' : '' }}">
+                        <a href="{{ route('caja.index') }}"> 
+                            <i class="material-icons">account_balance_wallet</i>
+                            <span>Caja</span>
+                        </a>
+                    </li>
+                    
+                    @if($item_configuracion)
+                    <li class="parent">
+                        <a href="javascript:void(0);" class="menu-toggle">
+                            <i class="material-icons">{{ $item_configuracion['icon'] }}</i>
+                            <span>{{ $item_configuracion['name'] }}</span>
+                        </a>
+                        <ul class="ml-menu">
+                            @foreach($item_configuracion['sub_menu'] as $sub)
+                                <li><a href ="{{ route($sub->menu_url) }}"><span>{{ $sub->name }}</span></a></li>
+                            @endforeach 
+                        </ul>
+                    </li>
+                    @endif
 
                 </ul>
             </div>

@@ -41756,12 +41756,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         customer_email: "",
         customer_phone: "",
         customer_address: "",
-        invoice_date: new Date().toISOString().slice(0, 10),
+        invoice_date: new Date(),
         total_discount: 0,
         total_amount: 0,
         grand_total: 0,
         paid_amount: 0,
-        payment_in: "cash",
+        metodo_pago: 'Efectivo',
+        cash_amount: 0,
+        transfer_amount: 0,
+        payment_in: "",
         bank_info: "",
         product: [{
           category: "",
@@ -41915,7 +41918,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         total_amount: 0,
         grand_total: 0,
         paid_amount: 0,
-        payment_in: "cash",
+        cash_amount: 0,
+        transfer_amount: 0,
+        payment_in: "",
         bank_info: "",
         product: [{
           category: "",
@@ -42411,7 +42416,7 @@ var render = function() {
                           attrs: {
                             "input-class": "form-control",
                             format: "yyyy-MM-dd",
-                            "value-format": "yyyy-MM-dd"
+                            "value-format": "yyyy/MM/dd"
                           },
                           model: {
                             value: _vm.invoice.invoice_date,
@@ -43012,7 +43017,7 @@ var render = function() {
                         })
                       ])
                     ]),
-                    _vm._v(" "),
+                    /* _vm._v(" "),
                     _c(
                       "div",
                       {
@@ -43077,7 +43082,7 @@ var render = function() {
                           )
                         ])
                       ]
-                    ),
+                    ), */
                     _vm._v(" "),
                     _vm.invoice.payment_in === "bank"
                       ? _c("div", { staticClass: "form-group" }, [
@@ -43493,7 +43498,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
   created: function created() {
 
     // this.hello();
-
+    moment.locale('es');
     var _this = this;
     this.getData();
 
@@ -44397,7 +44402,7 @@ var render = function() {
                           attrs: {
                             "input-class": "form-control",
                             format: "yyyy-MM-dd",
-                            "value-format": "yyyy-MM-dd"
+                            "value-format": "yyyy/MM/dd"
                           },
                           model: {
                             value: _vm.invoice.invoice_date,
@@ -45487,7 +45492,7 @@ var render = function() {
                         })
                       ]
                     ),
-                    _vm._v(" "),
+                    /* _vm._v(" "),
                     _c(
                       "div",
                       {
@@ -45541,7 +45546,7 @@ var render = function() {
                           ]
                         )
                       ]
-                    ),
+                    ), */
                     _vm._v(" "),
                     _vm.payment.payment_in === "banco"
                       ? _c(
@@ -45813,9 +45818,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 								getPayment: function getPayment(id) {
 												var _this2 = this;
 
-												axios.get(base_url + 'payment/' + id).then(function (response) {
+												axios.get(base_url + 'invoice/details/' + id).then(function (response) {
 
 																_this2.payments = response.data.payment;
+                                                                _this2.payment = response.data.payment;
 																_this2.invoice = response.data.invoice;
 												}).catch(function (error) {
 
@@ -45893,13 +45899,8 @@ var render = function() {
                     attrs: { id: "CreatePayment" }
                   },
                   [
-                    _vm._v("Pagos de factura N° : " + _vm._s(_vm.id) + "  "),
-                    _c("br"),
-                    _vm._v(
-                      " Cliente : " +
-                        _vm._s(_vm.invoice.customer.customer_name) +
-                        " "
-                    )
+                    _vm._v("📦 Productos de factura N° :" + _vm._s(_vm.id) + "  "),
+                    _c("br")
                   ]
                 )
               ]),
@@ -45918,38 +45919,7 @@ var render = function() {
                           return _c("tr", [
                             _c("td", [
                               _vm._v(
-                                _vm._s(_vm._f("moment")(payment.date, "LL"))
-                              )
-                            ]),
-                            _vm._v(" "),
-                            _c("td", [_vm._v(_vm._s(payment.amount))]),
-                            _vm._v(" "),
-                            _c("td", [_vm._v(_vm._s(payment.paid_in))]),
-                            _vm._v(" "),
-                            _c("td", [
-                              _vm._v(_vm._s(payment.bank_information))
-                            ]),
-                            _vm._v(" "),
-                            _c("td", [_vm._v(_vm._s(payment.user.name))]),
-                            _vm._v(" "),
-                            _c("td", [
-                              _c(
-                                "button",
-                                {
-                                  staticClass:
-                                    "btn bg-pink btn-circle waves-effect waves-circle waves-float",
-                                  attrs: { type: "button" },
-                                  on: {
-                                    click: function($event) {
-                                      return _vm.deletePayment(payment.id)
-                                    }
-                                  }
-                                },
-                                [
-                                  _c("i", { staticClass: "material-icons" }, [
-                                    _vm._v("delete")
-                                  ])
-                                ]
+                                _vm._s(_vm._s(payment.date))
                               )
                             ])
                           ])
@@ -45960,7 +45930,7 @@ var render = function() {
                   )
                 ]),
                 _vm._v(" "),
-                _c("div", { staticClass: "row" }, [
+                _c("div", { staticClass: "row" , style: { display: "none" }}, [
                   _c("div", { staticClass: "col-md-4" }, [
                     _c("div", { staticClass: "form-group" }, [
                       _c("p", [_vm._v("Total a pagar")]),
@@ -46019,17 +45989,17 @@ var staticRenderFns = [
     var _c = _vm._self._c || _h
     return _c("thead", [
       _c("tr", [
-        _c("th", [_vm._v("Fecha")]),
+        _c("th", [_vm._v("Productos")]),
         _vm._v(" "),
-        _c("th", [_vm._v("Importe")]),
+        _c("th", {style:{display:'none'}}, [_vm._v("Importe")]),
         _vm._v(" "),
-        _c("th", [_vm._v("Pago con")]),
+        _c("th", {style:{display:'none'}}, [_vm._v("Pago con")]),
         _vm._v(" "),
-        _c("th", [_vm._v("Informacion")]),
+        _c("th", {style:{display:'none'}}, [_vm._v("Informacion")]),
         _vm._v(" "),
-        _c("th", [_vm._v("Recibido por")]),
+        _c("th", {style:{display:'none'}}, [_vm._v("Recibido por")]),
         _vm._v(" "),
-        _c("th", [_vm._v("Eliminar")])
+        _c("th", {style:{display:'none'}}, [_vm._v("Eliminar")])
       ])
     ])
   }
@@ -46178,7 +46148,7 @@ var render = function() {
                         _vm._v(" "),
                         _c("td", [
                           _vm._v(
-                            _vm._s(_vm._f("moment")(value.sell_date, "LL"))
+                            _vm._s(_vm._f("moment")(value.sell_date + 'T00:00:00', "DD/MM/YYYY"))
                           )
                         ]),
                         _vm._v(" "),
@@ -46188,7 +46158,7 @@ var render = function() {
                         _vm._v(" "),
                         _c("td", [_vm._v(_vm._s(value.total_amount))]),
                         _vm._v(" "),
-                        _c("td", [_vm._v(_vm._s(value.paid_amount))]),
+                        _c("td", [_vm._v(_vm._s(value.metodo_pago))]),
                         _vm._v(" "),
                         _c(
                           "td",
@@ -46263,47 +46233,6 @@ var render = function() {
                         _vm._v(" "),
                         _c("td", [
                           _c(
-                            "a",
-                            {
-                              staticClass:
-                                "btn bg-orange btn-circle waves-effect waves-circle waves-float",
-                              attrs: {
-                                href: _vm.url + value.id,
-                                target: "_blank",
-                                type: "button"
-                              }
-                            },
-                            [
-                              _c("i", { staticClass: "material-icons" }, [
-                                _vm._v("print")
-                              ])
-                            ]
-                          )
-                        ]),
-                        _vm._v(" "),
-                        _c("td", [
-                          _c(
-                            "button",
-                            {
-                              staticClass:
-                                "btn bg-blue btn-circle waves-effect waves-circle waves-float",
-                              attrs: { type: "button" },
-                              on: {
-                                click: function($event) {
-                                  return _vm.editInvoice(value.id)
-                                }
-                              }
-                            },
-                            [
-                              _c("i", { staticClass: "material-icons" }, [
-                                _vm._v("edit")
-                              ])
-                            ]
-                          )
-                        ]),
-                        _vm._v(" "),
-                        _c("td", [
-                          _c(
                             "button",
                             {
                               staticClass:
@@ -46351,19 +46280,19 @@ var staticRenderFns = [
         _vm._v(" "),
         _c("th", [_vm._v("Monto total")]),
         _vm._v(" "),
-        _c("th", [_vm._v("Pagado")]),
+        _c("th", [_vm._v("Medio de Pago")]),
         _vm._v(" "),
         _c("th", [_vm._v("Debido")]),
         _vm._v(" "),
         _c("th", [_vm._v("Vendido por")]),
         _vm._v(" "),
-        _c("th", [_vm._v("Pagos")]),
+        _c("th", [_vm._v("Información")]),
         _vm._v(" "),
         _c("th", [_vm._v("Abonar")]),
         _vm._v(" "),
-        _c("th", [_vm._v("Imprimir")]),
+        _c("th", {style:{display:'none'}}, [_vm._v("Imprimir")]),
         _vm._v(" "),
-        _c("th", [_vm._v("Editar")]),
+        _c("th", {style:{display:'none'}}, [_vm._v("Editar")]),
         _vm._v(" "),
         _c("th", [_vm._v("Eliminar")])
       ])

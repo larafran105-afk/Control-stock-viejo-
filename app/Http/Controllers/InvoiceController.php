@@ -106,7 +106,7 @@ class InvoiceController extends Controller
      */
     public function store(Request $request)
     {
-
+        
       
         $request->validate([
           'customer_type' => 'nullable',
@@ -179,7 +179,9 @@ class InvoiceController extends Controller
             $invoice->discount_amount = $request->total_discount;  
             $invoice->paid_amount = $request->grand_total;  
             $invoice->sell_date = date('Y-m-d');  
-            $invoice->payment_method = $request->payment_info == 'cash' ? 1 : 2;
+            $invoice->metodo_pago = $request->payment_in ?? 'Efectivo';
+            $invoice->cash_amount = $request->cash_amount;     // 🚀 ESTO GUARDA EL EFECTIVO
+            $invoice->transfer_amount = $request->transfer_amount; // 🚀 ESTO GUARDA LA TRANSFERENCIA
             
             $invoice->save();
 
@@ -468,6 +470,8 @@ class InvoiceController extends Controller
            // delete sell 
              
             $sell = Sell::find($id);
+            
+            
 
             $sell->delete();
 
@@ -476,7 +480,9 @@ class InvoiceController extends Controller
             $details = SellDetails::where('sell_id','=',$id)->get();
 
             foreach ($details as $key => $value) {
-               
+               $detalle = "ELIMINÓ definitivamente la factura/venta ID #{$id}, Creada por usuario ID #{$value->user_id} con precio de {$value->sold_price}.";
+               \App\ActivityLog::record($detalle); 
+
                $stock = Stock::find($value->stock_id);
 
                $stock->current_quantity = $stock->current_quantity+$value->sold_quantity;
@@ -503,5 +509,26 @@ class InvoiceController extends Controller
              return response()->json(['status'=>'error','message'=>'¡Algo salió mal!']);
         }
 
+    }
+
+    public function getDetails($id)
+    {
+        $productos = \DB::table('sell_details')
+            ->join('products', 'sell_details.product_id', '=', 'products.id')
+            ->where('sell_id', $id) 
+            ->select(
+                // El JS busca 'date' para la primera columna
+                \DB::raw("CONCAT(products.product_name, ' (x', sell_details.sold_quantity, ')') as date") 
+            )
+            ->get();
+
+        return response()->json([
+            'payment' => $productos,
+            'invoice' => [
+                'total_amount' => 0,
+                'customer' => ['customer_name' => 'Carga'], 
+                'user' => ['name' => 'Matisco']
+            ]
+        ]);
     }
 }

@@ -9,6 +9,10 @@
  get and post mehod for update and delete
 |
 */
+
+
+
+
 Route::group(['middleware'=> ['auth','check.permission']],function(){
 
 
@@ -102,8 +106,8 @@ Route::post('user/update/{id}','UserManageController@update');
 
 Route::get('user-list','UserManageController@UserList');
 
-Route::get('comapany-setting',['as'=>'company.index','uses'=>'CompanyController@index']);
-Route::post('comapany-setting',['as'=>'company.store','uses'=>'CompanyController@store']);
+Route::get('company-setting',['as'=>'company.index','uses'=>'CompanyController@index']);
+Route::post('company-setting',['as'=>'company.store','uses'=>'CompanyController@store']);
 Route::get('password-change',['as'=>'password.index','uses'=>'SettingController@index']);
 Route::post('password-change',['as'=>'password.store','uses'=>'SettingController@store']);
 
@@ -125,6 +129,22 @@ Route::get('/auditoria', 'AuditoriaController@index')->name('auditoria.index');
 
 Auth::routes();
 
+Route::get('invoice/details/{id}', 'InvoiceController@getDetails');
+
 Route::get('/home', 'HomeController@index')->name('home');
 
 Route::get('check-new-audit', 'StockController@checkNewAudit');
+
+Route::group(['middleware' => ['auth']], function() {
+    // Ruta para guardar el monto e iniciar la caja
+    Route::post('/caja/abrir', 'CajaController@abrir')->name('caja.abrir');
+    
+    // Ruta para que el Super Admin omita la ventana
+    Route::get('/caja/omitir', 'CajaController@omitir')->name('caja.omitir');
+
+    // Ver estado actual y formulario de cierre
+    Route::get('/caja', 'CajaController@index')->name('caja.index');
+    
+    // Procesar el cierre
+    Route::post('/caja/cerrar', 'CajaController@cerrar')->name('caja.cerrar');
+});

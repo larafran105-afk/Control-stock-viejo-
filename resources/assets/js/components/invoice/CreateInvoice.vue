@@ -147,6 +147,8 @@
             </div>
           </div>
 
+          
+
           <!-- main invoice part  -->
           <div class="">
             <div class="table-responsive">
@@ -319,7 +321,7 @@
                 </div>
               </div>
 
-              <div class="form-group" v-show="invoice.paid_amount > 0">
+              <!-- <div class="form-group" v-show="invoice.paid_amount >= 0">
                 <label>Pagado en :</label>
                 <div class="input-group focused">
                   <div class="input-group-addon"></div>
@@ -327,9 +329,10 @@
                   <select class="form-control" v-model="invoice.payment_in">
                     <option :value="'cash'">Efectivo</option>
                     <option :value="'bank'">Banco</option>
+                    <option :value="'transfer'">Transferencia</option>
                   </select>
                 </div>
-              </div>
+              </div> -->
               <div class="form-group" v-if="invoice.payment_in === 'bank'">
                 <label>Información de pago:</label>
                 <div class="input-group focused">
@@ -387,12 +390,13 @@ export default {
         customer_email: "",
         customer_phone: "",
         customer_address: "",
-        invoice_date: new Date().toISOString().slice(0, 10),
+        invoice_date: new Date(),
         total_discount: 0,
         total_amount: 0,
         grand_total: 0,
         paid_amount: 0,
-        payment_in: "cash",
+        payment_in: "",
+        metodo_pago: "",
         bank_info: "",
         product: [
           {
@@ -567,7 +571,7 @@ export default {
         total_amount: 0,
         grand_total: 0,
         paid_amount: 0,
-        payment_in: "cash",
+        payment_in: "",
         bank_info: "",
         product: [
           {
