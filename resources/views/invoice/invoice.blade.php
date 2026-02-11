@@ -64,42 +64,64 @@
 </style>
 
 <script>
+    let ultimoIdSolicitado = null;
     document.addEventListener('click', function(e) {
-        // "Secuestramos" el clic del botón de Pagos (ojo azul)
-        const btn = e.target.closest('.btn-info');
+        const btn = e.target.closest('.bg-cyan'); 
         if (btn) {
-            setTimeout(() => {
-                const modal = document.querySelector('.modal-content');
-                if (modal) {
-                    // 1. Obtenemos el ID de la factura
-                    const row = btn.closest('tr');
-                    const invoiceId = row.querySelector('td:nth-child(2)').innerText.trim();
-                    
-                    // 2. Preparamos el cuerpo de la tabla como una lista de Excel
-                    const cuerpo = modal.querySelector('tbody');
-                    cuerpo.innerHTML = '<tr><td>Cargando lista de mercadería...</td></tr>';
+            const row = btn.closest('tr');
+            const rawId = row.querySelector('td:nth-child(1)').innerText;
+            const invoiceId = parseInt(rawId.replace(/\D/g, ''));
+            ultimoIdSolicitado = invoiceId;
+            console.log("DEBUG Matisco: Clic en Factura ID:", invoiceId);
+            // 2. MARCAR MODAL (Para evitar datos cruzados)
+            
 
-                    // 3. Traemos los datos reales
-                    fetch('/invoice/details/' + invoiceId)
-                        .then(res => res.json())
-                        .then(data => {
-                            cuerpo.innerHTML = '';
-                            data.forEach(item => {
-                                // Insertamos una fila simple con formato Producto x Cantidad
-                                cuerpo.innerHTML += `
-                                    <tr style="border: 1px solid #ddd;">
-                                        <td style="padding: 10px; font-family: monospace;">
-                                            <b>${item.product_name}</b> <span style="float:right;">x ${item.sold_quantity}</span>
-                                        </td>
-                                    </tr>`;
-                            });
-                        });
+            const desgloseViejo = document.getElementById('desglose-pago-dinamico');
+            if (desgloseViejo) {
+                desgloseViejo.remove();
+            }
+
+            setTimeout(() => {
+                fetch('/invoice/details/' + invoiceId)
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log("DEBUG Matisco: Servidor respondió ID:", data, " | Esperábamos:", ultimoIdSolicitado);
+
+                        if (invoiceId !== ultimoIdSolicitado) {
+                            console.warn("Respuesta vieja descartada para ID:", invoiceId);
+                            return; 
+                        }
                         
-                    // 4. Ocultamos los cuadros de "Total pagado" y montos de abajo
-                    modal.querySelectorAll('.modal-body > div:not(.table-responsive)').forEach(div => div.style.display = 'none');
-                    modal.querySelector('.modal-footer').style.borderTop = 'none';
-                }
-            }, 300);
+                        const inv = data.invoice;
+
+                        const tablaCuerpo = document.querySelector('#viewPayment tbody');
+                        if (tablaCuerpo) {
+                            // 1. LIMPIEZA: Buscamos si quedó un desglose de la factura anterior y lo borramos
+                            
+                            // 2. INYECCIÓN: Solo si el método es el combinado
+                            if (data.invoice.metodo_pago.trim() === 'Efectivo/Transferencia') {
+                                // Le ponemos un ID para poder borrarlo la próxima vez
+                                tablaCuerpo.innerHTML += `
+                                    <tr id="desglose-pago-dinamico" style="background: #f9f9f9; border-top: 2px solid #333;">
+                                        <td colapsan="10" style="padding: 10px;">
+                                            <div style="display:flex; justify-content: space-between; margin-bottom: 5px;">
+                                                <span><b>Efectivo:</b></span> <span>$${data.invoice.cash_amount}</span>
+                                            </div>
+                                            <div style="display:flex; justify-content: space-between;">
+                                                <span><b>Transferencia:</b></span> <span>$${data.invoice.transfer_amount}</span>
+                                            </div>
+                                        </td>   
+                                    </tr>`;
+                            }
+                        }
+
+                        // 3. Ocultamos los cuadros de abajo (Debido/Abonar)
+                        document.querySelectorAll('.modal-body > div:not(.table-responsive)').forEach(div => {
+                            div.style.setProperty("display", "none", "important");
+                        });
+                    });
+                    
+            }, 150); 
         }
     });
     
@@ -299,6 +321,65 @@
 
     // Vigilamos los cambios en el cuerpo de la página
     observer.observe(document.body, { childList: true, subtree: true });
+
+    // 1. CÁLCULO SIN NEGATIVOS
+    document.addEventListener('input', function (e) {
+        if (e.target.id === 'cash_amount_input' || e.target.id === 'transfer_amount_input') {
+            const vue = findVue();
+            if (!vue) return;
+
+            const total = parseFloat(vue.invoice.grand_total) || 0; // Usamos grand_total de tu captura
+            let val = parseFloat(e.target.value) || 0;
+
+            // VALIDACIÓN: Si el monto ingresado supera el total, lo limitamos
+            if (val > total) {
+                val = total;
+                e.target.value = total.toFixed(2);
+            }
+
+            const inputCash = document.getElementById('cash_amount_input');
+            const inputTrans = document.getElementById('transfer_amount_input');
+            const resto = (total - val).toFixed(2);
+
+            if (e.target.id === 'cash_amount_input') {
+                inputTrans.value = resto;
+                vue.invoice.transfer_amount = resto;
+                vue.invoice.cash_amount = val.toFixed(2);
+            } else {
+                inputCash.value = resto;
+                vue.invoice.cash_amount = resto;
+                vue.invoice.transfer_amount = val.toFixed(2);
+            }
+        }
+    });
+
+    // 2. INTERCEPTOR QUE MANTIENE LA VENTANA ABIERTA
+    document.addEventListener('click', function (e) {
+        // Buscamos el botón 'Generar Factura' por su clase 'bg-teal'
+        const btnGenerar = e.target.closest('.bg-teal');
+
+        if (btnGenerar) {
+            const vue = findVue();
+            if (!vue || vue.invoice.metodo_pago !== 'Efectivo/Transferencia') return;
+
+            const total = parseFloat(vue.invoice.grand_total).toFixed(2);
+            const cash = parseFloat(document.getElementById('cash_amount_input').value) || 0;
+            const trans = parseFloat(document.getElementById('transfer_amount_input').value) || 0;
+            const suma = (cash + trans).toFixed(2);
+
+            if (suma !== total) {
+                // MATAMOS EL EVENTO: Esto evita que se cierre el modal y que Vue procese el clic
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                alert(`🛑 Error de Montos: La suma ($${suma}) debe ser exactamente igual al total ($${total}).\n\nPor favor, corregí los valores sin cerrar esta ventana.`);
+                
+                console.error("Acción bloqueada: Diferencia detectada.");
+            }
+        }
+    }, true); // El 'true' es vital para capturar el evento antes de que el modal se cierre
+
 </script>
 
 

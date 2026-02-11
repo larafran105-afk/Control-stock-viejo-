@@ -470,18 +470,43 @@ class InvoiceController extends Controller
            // delete sell 
              
             $sell = Sell::find($id);
+            $details = SellDetails::where('sell_id','=',$id)->get();
+            $listaProds = "";
             
+            foreach ($details as $d) {
+                // Buscamos en la tabla 'products' donde la columna es 'product_name'
+                $p = \App\Product::find($d->product_id); 
+                $nombre = $p ? $p->product_name : 'ID: ' . $d->product_id; 
+                
+                // Usamos 'sold_quantity' de tu tabla sell_details
+                $listaProds .= "{$nombre} (Cant: {$d->sold_quantity}), ";
+            }
+            $listaProds = rtrim($listaProds, ', ');
+
+
+            $infoAuditoria = "ELIMINACIÓN DE FACTURA #{$id} | " .
+                             "Cliente: " . ($sell->customer->name ?? 'N/A') . " | " .
+                             "Total: $" . number_format($sell->total_amount, 2) . " | " .
+                             "Método: " . $sell->metodo_pago . "." ;
+                             
+                             if($sell->metodo_pago == 'Efectivo/Transferencia') {
+                                $infoAuditoria .= " | Desglose: (Efectivo: $" . number_format($sell->cash_amount ?? 0, 2) . 
+                                " / Transf: $" . number_format($sell->transfer_amount ?? 0, 2) . ")";
+                             }
+                             
+                             $infoAuditoria .= " | PRODUCTOS: [" . $listaProds . "]";
+
+            \App\ActivityLog::record($infoAuditoria);  
             
 
             $sell->delete();
 
            // delete Sell details 
 
-            $details = SellDetails::where('sell_id','=',$id)->get();
 
-            foreach ($details as $key => $value) {
-               $detalle = "ELIMINÓ definitivamente la factura/venta ID #{$id}, Creada por usuario ID #{$value->user_id} con precio de {$value->sold_price}.";
-               \App\ActivityLog::record($detalle); 
+             foreach ($details as $key => $value) {
+               /* $detalle = "ELIMINÓ definitivamente la factura/venta ID #{$id}, Creada por usuario ID #{$value->user_id} con precio de {$value->sold_price}.";
+               \App\ActivityLog::record($detalle);  */
 
                $stock = Stock::find($value->stock_id);
 
@@ -513,6 +538,8 @@ class InvoiceController extends Controller
 
     public function getDetails($id)
     {
+        $factura = \DB::table('sells')->where('id', $id)->first();
+
         $productos = \DB::table('sell_details')
             ->join('products', 'sell_details.product_id', '=', 'products.id')
             ->where('sell_id', $id) 
@@ -525,9 +552,12 @@ class InvoiceController extends Controller
         return response()->json([
             'payment' => $productos,
             'invoice' => [
-                'total_amount' => 0,
-                'customer' => ['customer_name' => 'Carga'], 
-                'user' => ['name' => 'Matisco']
+                'total_amount'      => 0,
+                'cash_amount'       => $factura->cash_amount,     // <--- DATA REAL
+                'transfer_amount'   => $factura->transfer_amount, // <--- DATA REAL
+                'metodo_pago'       => $factura->metodo_pago,
+                'customer'          => ['customer_name' => 'Carga'], 
+                'user'              => ['name' => 'Matisco']
             ]
         ]);
     }

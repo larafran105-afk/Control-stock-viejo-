@@ -129,6 +129,8 @@ Route::get('/auditoria', 'AuditoriaController@index')->name('auditoria.index');
 
 Auth::routes();
 
+Route::get('/cajones', 'ProductController@cajonesIndex')->name('cajones.index');
+
 Route::get('invoice/details/{id}', 'InvoiceController@getDetails');
 
 Route::get('/home', 'HomeController@index')->name('home');

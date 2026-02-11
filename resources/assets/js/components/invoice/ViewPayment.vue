@@ -189,7 +189,7 @@
 
 				closeModal(){
 
-					EventBus.$emit('invoice-created',1);
+					/* EventBus.$emit('invoice-created',1); */
 
 				}
 

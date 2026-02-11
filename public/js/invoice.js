@@ -45851,8 +45851,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 												});
 								},
 								closeModal: function closeModal() {
-
-												__WEBPACK_IMPORTED_MODULE_0__vue_asset__["EventBus"].$emit('invoice-created', 1);
+                                                //  COMENTAMOS PARA EVITAR RECARGA EN FACTURAS
+												/* __WEBPACK_IMPORTED_MODULE_0__vue_asset__["EventBus"].$emit('invoice-created', null); */
 								}
 				},
 

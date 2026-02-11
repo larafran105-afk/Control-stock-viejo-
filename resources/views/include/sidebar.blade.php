@@ -106,6 +106,13 @@
                             <span>Stock Total por Producto</span>
                         </a>
                     </li>   
+
+                    <li class="nav-item">
+                        <a href="{{ route('cajones.index') }}" class="button">
+                            <i class="material-icons">inbox</i>
+                            <span>Cajones</span>
+                        </a>
+                    </li>
                     
                     <li class="{{ Request::is('caja*') ? 'active' : '' }}">
                         <a href="{{ route('caja.index') }}"> 

@@ -201,4 +201,25 @@ class ProductController extends Controller
          }
 
     }
+
+    public function cajonesIndex() {
+        $totalFisicoCerveza = 555; // <--- CAMBIÁ ESTE NÚMERO (Tus cajones reales de cerveza)
+        $totalFisicoGaseosa = 253;
+    
+        // Definimos los IDs de los productos (sacados de tus tablas de HeidiSQL)
+        $idQuilmes = 9;     // Quilmes 1L x12u
+        $idsGaseosas = [30, 28, 29, 31]; // Fanta 2.5, Coca 2.5, Coca 1.5, Sprite 2,5
+
+        // Obtenemos el stock actual de la tabla 'stocks'
+        $stockCerveza = \App\Stock::where('product_id', $idQuilmes)->sum('current_quantity');
+        $stockGaseosa = \App\Stock::whereIn('product_id', $idsGaseosas)->sum('current_quantity');
+
+        $vaciosCerveza = $totalFisicoCerveza - $stockCerveza;
+        $vaciosGaseosa = $totalFisicoGaseosa - $stockGaseosa;
+
+        return view('cajones.index', compact(
+            'totalFisicoCerveza', 'stockCerveza', 'vaciosCerveza',
+            'totalFisicoGaseosa', 'stockGaseosa', 'vaciosGaseosa'
+        ));
+    }
 }
