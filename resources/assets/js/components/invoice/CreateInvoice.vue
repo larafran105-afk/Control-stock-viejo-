@@ -352,7 +352,15 @@
               </div>
 
               <div class="form-group">
-                <button type="submit" class="btn bg-teal">Generar Factura</button>
+                <!-- // ULTIMO CAMBIO, ANTES <button type="submit" class="btn bg-teal">Generar Factura</button> -->
+                <button type="submit" class="btn bg-teal" :disabled="is_processing">
+                    <span v-if="is_processing">
+                        <i class="fas fa-spinner fa-spin"></i> Procesando...
+                    </span>
+                    <span v-else>
+                        Generar Factura
+                    </span>
+                </button>
               </div>
             </div>
           </div>
@@ -398,6 +406,8 @@ export default {
         payment_in: "",
         metodo_pago: "",
         bank_info: "",
+        form: {},
+        is_processing: false,
         product: [
           {
             category: "",

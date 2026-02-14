@@ -89,7 +89,7 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show the form for creating a new  resource.
      *
      * @return \Illuminate\Http\Response
      */
@@ -140,6 +140,17 @@ class InvoiceController extends Controller
           'product.*.discount.regex' => 'invalid format',  
         ]);
 
+        $ventaDuplicada = \App\Sell::where('user_id', Auth::user()->id)
+            ->where('total_amount', $request->grand_total)
+            ->where('created_at', '>=', \Carbon\Carbon::now()->subSeconds(3))
+            ->first();
+
+        if ($ventaDuplicada) {
+            return response()->json([
+                'status' => 'error',
+                'message' => '¡Atención! Evitamos procesar una factura duplicada por doble clic.'
+            ], 422);
+        }
 
         try{
 

@@ -65,6 +65,7 @@
 
 <script>
     let ultimoIdSolicitado = null;
+
     document.addEventListener('click', function(e) {
         const btn = e.target.closest('.bg-cyan'); 
         if (btn) {
@@ -73,37 +74,45 @@
             const invoiceId = parseInt(rawId.replace(/\D/g, ''));
             ultimoIdSolicitado = invoiceId;
             console.log("DEBUG Matisco: Clic en Factura ID:", invoiceId);
-            // 2. MARCAR MODAL (Para evitar datos cruzados)
+
+            // 1. RESTAURAR ESTADO ANTERIOR: Volvemos a mostrar los divs ocultos
+            // por si la factura anterior los había escondido.
             
 
-            const desgloseViejo = document.getElementById('desglose-pago-dinamico');
-            if (desgloseViejo) {
-                desgloseViejo.remove();
-            }
+            setTimeout(() => {
+                document.querySelectorAll('.modal-body > div:not(.table-responsive)').forEach(div => {
+                    div.style.removeProperty("display"); 
+                });
+
+                document.querySelectorAll('.modal-body > div:not(.table-responsive)').forEach(div => {
+                            div.style.setProperty("display", "none", "important");
+                        });
+                        
+            }, 5);
 
             setTimeout(() => {
                 fetch('/invoice/details/' + invoiceId)
                     .then(res => res.json())
                     .then(data => {
-                        console.log("DEBUG Matisco: Servidor respondió ID:", data, " | Esperábamos:", ultimoIdSolicitado);
-
                         if (invoiceId !== ultimoIdSolicitado) {
                             console.warn("Respuesta vieja descartada para ID:", invoiceId);
                             return; 
                         }
                         
-                        const inv = data.invoice;
-
                         const tablaCuerpo = document.querySelector('#viewPayment tbody');
                         if (tablaCuerpo) {
-                            // 1. LIMPIEZA: Buscamos si quedó un desglose de la factura anterior y lo borramos
+                            // 2. LIMPIEZA PROFUNDA (Justo antes de actuar)
+                            // Lo hacemos ACÁ adentro para asegurar que el modal ya cargó
+                            const desgloseViejo = document.getElementById('desglose-pago-dinamico');
+                            if (desgloseViejo) {
+                                desgloseViejo.remove();
+                            }
                             
-                            // 2. INYECCIÓN: Solo si el método es el combinado
+                            // 3. INYECCIÓN SEGURA
                             if (data.invoice.metodo_pago.trim() === 'Efectivo/Transferencia') {
-                                // Le ponemos un ID para poder borrarlo la próxima vez
-                                tablaCuerpo.innerHTML += `
+                                const nuevaFila = `
                                     <tr id="desglose-pago-dinamico" style="background: #f9f9f9; border-top: 2px solid #333;">
-                                        <td colapsan="10" style="padding: 10px;">
+                                        <td colspan="10" style="padding: 10px;">
                                             <div style="display:flex; justify-content: space-between; margin-bottom: 5px;">
                                                 <span><b>Efectivo:</b></span> <span>$${data.invoice.cash_amount}</span>
                                             </div>
@@ -112,15 +121,18 @@
                                             </div>
                                         </td>   
                                     </tr>`;
+                                
+                                // insertAdjacentHTML es clave: inyecta sin destruir la tabla existente
+                                tablaCuerpo.insertAdjacentHTML('beforeend', nuevaFila);
                             }
                         }
 
-                        // 3. Ocultamos los cuadros de abajo (Debido/Abonar)
+                        // 4. OCULTAR (Solo para esta factura actual)
                         document.querySelectorAll('.modal-body > div:not(.table-responsive)').forEach(div => {
                             div.style.setProperty("display", "none", "important");
                         });
-                    });
-                    
+                    })
+                    .catch(err => console.error("Error al obtener detalles:", err));
             }, 150); 
         }
     });
@@ -379,6 +391,36 @@
             }
         }
     }, true); // El 'true' es vital para capturar el evento antes de que el modal se cierre
+    //ULTIMO CAMBIO
+    // Esperamos a que todo cargue
+    $(document).ready(function() {
+        // Escuchamos los clics en todo el documento (porque Vue crea el botón dinámicamente)
+        $(document).on('submit', 'form', function(e) {
+            // Buscamos si el formulario tiene el botón de "Generar Factura"
+            var btn = $(this).find('button.bg-teal[type="submit"]');
+            
+            if(btn.length > 0) {
+                // Si el botón ya estaba bloqueado, cortamos todo (evita doble envío)
+                if(btn.prop('disabled')) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                // Bloqueamos el botón visualmente
+                btn.prop('disabled', true);
+                var contenidoOriginal = btn.html();
+                btn.html('<i class="fas fa-spinner fa-spin"></i> Procesando...');
+
+                // OJO: Si el servidor devuelve error (ej: validación), Vue no va a poder 
+                // desbloquear este botón porque lo bloqueamos "desde afuera".
+                // Ponemos un temporizador de seguridad de 5 segundos para reactivarlo por si acaso.
+                setTimeout(function() {
+                    btn.prop('disabled', false);
+                    btn.html(contenidoOriginal);
+                }, 5000);
+            }
+        });
+    });
 
 </script>
 
