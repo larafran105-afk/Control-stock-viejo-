@@ -114,12 +114,38 @@
                         </a>
                     </li>
                     
+                    @if(Auth::user()->role_id == 2 )
+                        <li class="parent">
+                            <a href="javascript:void(0);" class="menu-toggle">
+                                <i class="material-icons">bar_chart</i>
+                                <span>Estadisticas</span>
+                            </a>
+                            <ul class="ml-menu">
+                            
+                                <li class="nav-item">
+                                    <a href="{{ url('/reporte-grafico') }}">
+                                        <span>Por Hora</span>
+                                    </a>
+                                </li>
+                                
+                                <li class="nav-item">
+                                    <a href="{{ url('/reporte-mensual') }}">
+                                        <span>Por Mes</span>
+                                    </a>
+                                </li>
+
+                            </ul>
+                        </li>
+                    
+                    @endif
+                    
                     <li class="{{ Request::is('caja*') ? 'active' : '' }}">
                         <a href="{{ route('caja.index') }}"> 
                             <i class="material-icons">account_balance_wallet</i>
                             <span>Caja</span>
                         </a>
                     </li>
+                    
                     
                     @if($item_configuracion)
                     <li class="parent">

@@ -225,6 +225,7 @@
             <option value="Efectivo/Transferencia">Efectivo/Transferencia</option>
             <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
             <option value="Tarjeta de Débito">Tarjeta de Débito</option>
+            <option value="Cuenta Corriente">Cuenta Corriente</option>
         </select>
 
         <div id="mixed_payment_fields" style="display: none; margin-top: 15px; border-top: 1px dashed #009688; padding-top: 10px;">

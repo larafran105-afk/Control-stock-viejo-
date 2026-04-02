@@ -237,7 +237,7 @@ class StockController extends Controller
       $comprobante = $stock->chalan_no;
 
       $identificacionCompleta = "{$nombreProdBase} ({$comprobante} - {$quienCargo})";
-      $detalle = "Editó existencias de $identificacionCompleta. ";
+      $detalle = "Editó Precio de $identificacionCompleta. ";
       $detalle .= "Venta: $$precioVentaViejo -> $" . $request->selling_price . " | ";
       $detalle .= "Compra: $$precioCompraViejo -> $" . $request->buying_price;
 

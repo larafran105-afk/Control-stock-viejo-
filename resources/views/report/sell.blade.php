@@ -89,7 +89,7 @@
 							?>
 							<tr>
 
-								<td>{{ $value->product->product_name }}</td>
+								<td>{{ $value->product ? $value->product->product_name : 'Producto Eliminado' }}</td>
 								<td>{{ $value->chalan_no }}</td>
 								<td>{{ date("j M Y", strtotime($value->selling_date) ) }}</td>
 								<td>{{ $value->customer->customer_name ?? 'Consumidor Final' }}</td>

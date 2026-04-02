@@ -41856,10 +41856,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       }
     },
     CheckStock: function CheckStock(product_index) {
+      var qty = parseFloat(this.invoice.product[product_index].quantity);
+      var stock = parseFloat(this.invoice.product[product_index].current_quantity);
 
-      if (this.invoice.product[product_index].quantity > this.invoice.product[product_index].current_quantity) {
+      if (qty > stock) {
 
-        this.invoice.product[product_index].quantity = this.invoice.product[product_index].current_quantity;
+        this.invoice.product[product_index].quantity = stock;
       }
     },
     showInvoice: function showInvoice() {
@@ -42679,6 +42681,7 @@ var render = function() {
                                 staticClass: "form-control",
                                 attrs: {
                                   type: "number",
+                                  step: "any",
                                   name: "",
                                   disabled: vl.chalan_id === "",
                                   placeholder: "Cantidad"

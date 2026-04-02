@@ -230,7 +230,7 @@
                     </td>
 
                     <td>
-                      <input class="form-control" type="number" @change="CheckStock(index)" name
+                      <input class="form-control" type="number" step="any" @change="CheckStock(index)" name
                         v-model="invoice.product[index].quantity" v-bind:disabled="vl.chalan_id === ''"
                         placeholder="Cantidad">
 
@@ -515,11 +515,13 @@ export default {
     },
 
     CheckStock(product_index) {
+      var qty = parseFloat(this.invoice.product[product_index].quantity);
+      var stock = parseFloat(this.invoice.product[product_index].current_quantity);
 
-      if (this.invoice.product[product_index].quantity > this.invoice.product[product_index].current_quantity) {
+      if (qty > stock) {
 
 
-        this.invoice.product[product_index].quantity = this.invoice.product[product_index].current_quantity;
+        this.invoice.product[product_index].quantity = stock;
 
       }
     },

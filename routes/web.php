@@ -15,8 +15,13 @@
 
 Route::group(['middleware'=> ['auth','check.permission']],function(){
 
+Route::get('/cajones', 'ProductController@cajonesIndex')->name('cajones.index');
 
 
+Route::get('/reporte-grafico', 'ReportController@graficoVentas')->name('reporte.grafico');
+Route::get('/reporte-mensual', 'ReportController@graficoMensual')->name('reporte.mensual');
+
+Route::get('/auditoria-horaria', 'ReportController@auditoriaHoraria');
 
 // dashaboard 
 Route::get('/','DashboardController@index');
@@ -129,7 +134,6 @@ Route::get('/auditoria', 'AuditoriaController@index')->name('auditoria.index');
 
 Auth::routes();
 
-Route::get('/cajones', 'ProductController@cajonesIndex')->name('cajones.index');
 
 Route::get('invoice/details/{id}', 'InvoiceController@getDetails');
 
@@ -150,3 +154,4 @@ Route::group(['middleware' => ['auth']], function() {
     // Procesar el cierre
     Route::post('/caja/cerrar', 'CajaController@cerrar')->name('caja.cerrar');
 });
+

@@ -82,7 +82,7 @@
 							?>
 							<tr>
 
-								<td>{{ $value->product->product_name }}</td>
+								<td>{{ $value->product ? $value->product->product_name : 'Producto Eliminado' }}</td>
 								<td>{{ $value->total_quantity }}</td>
 								<td>{{ $value->total_sold_price }}</td>
 								<td>{{ $value->total_buy_price }}</td>

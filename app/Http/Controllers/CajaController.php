@@ -8,7 +8,8 @@ use Auth;
 
 class CajaController extends Controller
 {
-    public function abrir(Request $request) {
+    public function abrir(Request $request)
+    {
         $request->validate(['monto' => 'required|numeric|min:0']);
 
         Caja::create([
@@ -21,39 +22,42 @@ class CajaController extends Controller
         return back()->with('success', 'Caja abierta correctamente');
     }
 
-    public function omitir() {
-        if (Auth::user()->role_id == 2 ||Auth::user()->role_id == 13 ) {
+    public function omitir()
+    {
+        if (Auth::user()->role_id == 2 || Auth::user()->role_id == 13) {
             session(['caja_omitida_hoy' => true]);
         }
         return back();
     }
 
     // Muestra el estado de la caja abierta
-    public function index() {
+    public function index()
+    {
         $user = auth()->user();
-    
+
         $caja = \App\Caja::where('user_id', $user->id)
-                        ->where('estado', 'abierta')
-                        ->first();
+            ->where('estado', 'abierta')
+            ->first();
         $efectivo = 0;
         $transferencia = 0;
-        
+
         if ($caja) {
             // Sumamos solo facturas creadas después de 'abierta_at'
-            $ventas = \App\Sell::where('created_at', '>=', $caja->abierta_at)->get();
+            $ventas = \App\Sell::where('user_id', $caja->user_id)
+                ->where('created_at', '>=', $caja->abierta_at)->get();
 
             foreach ($ventas as $v) {
-                if ($v->metodo_pago == 'Efectivo') {
+                if ($v->metodo_pago == 'Efectivo' || $v->metodo_pago == 'Cuenta Corriente - Efectivo') {
                     $efectivo += $v->total_amount;
-                } elseif ($v->metodo_pago == 'Transferencia') {
+                } elseif ($v->metodo_pago == 'Transferencia' || $v->metodo_pago == 'Cuenta Corriente - Transferencia') {
                     $transferencia += $v->total_amount;
-                } elseif ($v->metodo_pago == 'Efectivo/Transferencia') {
+                } elseif ($v->metodo_pago == 'Efectivo/Transferencia' || $v->metodo_pago == 'Cuenta Corriente - Efectivo/Transferencia') {
                     // Usamos los campos nuevos que creamos
                     $efectivo += $v->cash_amount;
                     $transferencia += $v->transfer_amount;
-                } elseif ($v->metodo_pago == 'Tarjeta de Crédito') {
+                } elseif ($v->metodo_pago == 'Tarjeta de Crédito' || $v->metodo_pago == 'Cuenta Corriente - Tarjeta de Crédito') {
                     $transferencia += $v->total_amount;
-                } elseif ($v->metodo_pago == 'Tarjeta de Débito') {
+                } elseif ($v->metodo_pago == 'Tarjeta de Débito' || $v->metodo_pago == 'Cuenta Corriente - Tarjeta de Débito') {
                     $transferencia += $v->total_amount;
                 }
             }
@@ -62,18 +66,19 @@ class CajaController extends Controller
         $historial = null;
         if ($user->role_id == 2 || $user->role_id == 13) {
             $historial = \App\Caja::with('user')
-                                ->orderBy('created_at', 'desc')
-                                ->get();
+                ->orderBy('created_at', 'desc')
+                ->get();
         } else {
             $historial = \App\Caja::where('user_id', $user->id)
-                             ->with('user')
-                             ->orderBy('created_at', 'desc')
-                             ->get(); 
+                ->with('user')
+                ->orderBy('created_at', 'desc')
+                ->get();
         }
 
         // 🚀 LÓGICA DE AUDITORÍA PARA CADA FILA DEL HISTORIAL
         foreach ($historial as $h) {
-            $query = \App\Sell::where('created_at', '>=', $h->abierta_at);
+            $query = \App\Sell::where('user_id', $h->user_id)
+                ->where('created_at', '>=', $h->abierta_at);
             // Si la caja ya se cerró, filtramos hasta la fecha de cierre
             if ($h->cerrada_at) {
                 $query->where('created_at', '<=', $h->cerrada_at);
@@ -84,14 +89,14 @@ class CajaController extends Controller
             $h->sum_transferencia = 0;
 
             foreach ($ventasH as $v) {
-                if ($v->metodo_pago == 'Efectivo') {
+                if ($v->metodo_pago == 'Efectivo' || $v->metodo_pago == 'Cuenta Corriente - Efectivo') {
                     $h->sum_efectivo += $v->total_amount;
-                } elseif ($v->metodo_pago == 'Transferencia') {
+                } elseif ($v->metodo_pago == 'Transferencia' || $v->metodo_pago == 'Cuenta Corriente - Transferencia') {
                     $h->sum_transferencia += $v->total_amount;
-                } elseif ($v->metodo_pago == 'Efectivo/Transferencia') {
+                } elseif ($v->metodo_pago == 'Efectivo/Transferencia' || $v->metodo_pago == 'Cuenta Corriente - Efectivo/Transferencia') {
                     $h->sum_efectivo += $v->cash_amount;
                     $h->sum_transferencia += $v->transfer_amount;
-                } elseif ($v->metodo_pago == 'Tarjeta de Crédito' || $v->metodo_pago == 'Tarjeta de Débito') {
+                } elseif (in_array($v->metodo_pago, ['Tarjeta de Crédito', 'Tarjeta de Débito', 'Cuenta Corriente - Tarjeta de Crédito', 'Cuenta Corriente - Tarjeta de Débito'])) {
                     $h->sum_transferencia += $v->total_amount;
                 }
             }
@@ -99,23 +104,28 @@ class CajaController extends Controller
         }
 
         return view('caja.estado', compact('caja', 'historial', 'efectivo', 'transferencia', 'totalVentas'));
-        }
+    }
 
     // Procesa el cierre de la caja
-    public function cerrar(Request $request) {
-        $request->validate(['monto_final' => 'required|numeric|min:0']);
+    public function cerrar(Request $request)
+    {
+        $request->validate([
+            'monto_final' => 'required|numeric|min:0',
+            'comentarios' => 'nullable|string|max:1000'
+        ]);
 
         $caja = \App\Caja::where('user_id', auth()->id())
-                        ->where('estado', 'abierta')
-                        ->first();
+            ->where('estado', 'abierta')
+            ->first();
 
         if ($caja) {
             $caja->update([
                 'monto_final' => $request->monto_final,
+                'comentarios' => $request->comentarios,
                 'estado' => 'cerrada',
                 'cerrada_at' => now()
             ]);
-            
+
             // Limpiamos la sesión del admin por si acaso
             session()->forget('caja_omitida_hoy');
 
